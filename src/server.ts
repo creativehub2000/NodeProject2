@@ -11,7 +11,7 @@ const server = express( );
 server.use( express.json() );
 
 server.all( `*`, (req, res) => {
-     res.status( 200 ).send( `Welcome to our new API's!!!!` );
+     res.status( 200 ).send( `Welcome to our new API's!` );
 });
 
 server.listen( PORT, ( ) => {
