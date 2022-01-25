@@ -93,15 +93,29 @@ jobs:
       if: github.event_name == 'push' && github.ref == 'refs/heads/master'
       run: echo "Deploy the application to production here..."
 
-    - name: Open Issue
-      if: failure() && github.event_name == 'pull_request'
-      run: |
-        curl -X POST \
-        -H 'authorization: Bearer ${{ secrets.SEMANTIC_TOKEN }}' \
-        -H 'content-type: application/json' \
-        --url https://api.github.com/repos/${{github.repository}}/issues \
-        --data '{
-          "title": "Automated Issue for commit ${{github.sha}}", 
-          "body": "This issue was automatically created by GitHub Action Workflow **${{github.workflow}}**. \n\n The commit hash was: _${{github.sha}}_.", 
-          "assignees": ["${{github.event.pull_request.user.login}}"]
-          }'
+    - name: Try to fail!
+      run: exit 1
+
+    - name: Create Issue Action
+      if: ${{ failure() }}
+      uses: nashmaniac/create-issue-action@v1.1
+      with:
+        title: Automated Issue for commit ${{github.sha}}
+        token: ${{secrets.SEMANTIC_TOKEN}}
+        assignees: ${{github.actor}}
+        labels: worflow-failed
+        body: This issue was automatically created by GitHub Action Workflow ${{github.sha}}
+      
+
+    # - name: Open Issue
+    #   if: failure() && github.event_name == 'pull_request'
+    #   run: |
+    #     curl -X POST \
+    #     -H 'authorization: Bearer ${{ secrets.SEMANTIC_TOKEN }}' \
+    #     -H 'content-type: application/json' \
+    #     --url https://api.github.com/repos/${{github.repository}}/issues \
+    #     --data '{
+    #       "title": "Automated Issue for commit ${{github.sha}}", 
+    #       "body": "This issue was automatically created by GitHub Action Workflow **${{github.workflow}}**. \n\n The commit hash was: _${{github.sha}}_.", 
+    #       "assignees": ["${{github.event.pull_request.user.login}}"]
+    #       }'
