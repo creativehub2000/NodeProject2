@@ -73,9 +73,10 @@ jobs:
         name: Build
         path: build
 
-    - name: ZIP Assets
+    - name: Add Additional Assets for Release
       if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-      run: zip -r build.zip ./build
+      run: |
+        zip -r build.zip ./build
         
     - name: Create a Release
       if: github.event_name == 'push' && github.ref == 'refs/heads/master'
