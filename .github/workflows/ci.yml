@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, master]
+  push:
+    branches: [develop, master]
+
+env:
+  NODE_VERSION: '14.x'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Cache Dependencies
+      # Cached dependencies can be re-used on every workflow run! Cache is unique to a runner OS.
+      # path to where cache (node_modules) stored in Ubuntu/macOS. Its different path in Windows
+      # Cache is saved 
+      # extra keys which GitHub can search for caches (if GitHub didnt find any cache using the given 'key'), we can have multiple restore keys alsounder this key generated dynamically, based on runner OS & package-lock.json file
+      uses: actions/cache@v2
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+    
+    - name: Setup Node.js ${{ env.NODE_VERSION }}
+      uses: actions/setup-node@v2
+      with:
+       node-version: ${{ env.NODE_VERSION }}
+
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Do Code Analysis
+      # run: npm run format:check
+      run: echo "Do code analysis here..."
+
+    - name: Run Tests
+      # Run tests & store it on a folder called 'coverage'
+      # run: npm test -- --coverage
+      # env:
+      #   CI: true
+      run: echo "Run tests here..."
+
+    - name: Upload Code Coverage as Artifact
+      # uses: actions/upload-artifact@v2
+      # with:
+      #   name: Code Coverage
+      #   path: coverage
+      run: echo "Upload code coverage as an artifact here..."
+
+    - name: Upload Test Coverage as Artifact
+      # uses: actions/upload-artifact@v2
+      # with:
+      #   name: Test Coverage
+      #   path: testcoverage
+      run: echo "Upload test coverage as an artifact here..."
+
+    - name: Build Project
+      if: github.event_name == 'push'
+      run: echo "Build the project here..."
+
+    - name: Upload Build Folder as Artifact
+      if: github.event_name == 'push'
+      uses: actions/upload-artifact@v2
+      with:
+        name: Build
+        path: build
+
+    - name: ZIP Assets
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+      run: zip -r build.zip ./build
+        
+    - name: Create a Release
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+      run: npx semantic-release
+      env:
+        GITHUB_TOKEN: ${{ secrets.SEMANTIC_TOKEN }}
+        # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Deploy to Staging Server
+      if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+      run: echo "Deploy the application to staging here..."
+
+    - name: Deploy to Production Server
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+      run: echo "Deploy the application to production here..."
+
+    - name: Open Issue
+      if: failure() && github.event_name == 'pull_request'
+      run: |
+        curl -X POST \
+        -H 'authorization: Bearer ${{ secrets.SEMANTIC_TOKEN }}' \
+        -H 'content-type: application/json' \
+        --url https://api.github.com/repos/${{github.repository}}/issues \
+        --data '{
+          "title": "Automated Issue for commit ${{github.sha}}", 
+          "body": "This issue was automatically created by GitHub Action Workflow **${{github.workflow}}**. \n\n The commit hash was: _${{github.sha}}_.", 
+          "assignees": ["${{github.event.pull_request.user.login}}"]
+          }'
