@@ -2,8 +2,6 @@
 
 # Node Project 2
 
----
-
 This project is used for testing CICD implementation.
 
 **This project uses following languages:**
