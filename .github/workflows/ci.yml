@@ -103,7 +103,7 @@ jobs:
         title: Automated Issue for commit ${{github.sha}}
         token: ${{secrets.SEMANTIC_TOKEN}}
         assignees: ${{github.actor}}
-        labels: worflow-failed
+        labels: workflow-failed
         body: This issue was automatically created by GitHub Action Workflow ${{github.sha}}
       
 
